@@ -1,0 +1,21 @@
+{
+  "name": "incidents-infra",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "cdk:deploy": "cdk deploy --all",
+    "cdk:destroy": "cdk destroy --all",
+    "cdk:diff": "cdk diff"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.100.0",
+    "constructs": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "aws-cdk": "^2.100.0",
+    "typescript": "^5.1.0"
+  }
+}
