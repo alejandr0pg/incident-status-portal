@@ -8,7 +8,9 @@ env:
   ECR_REPOSITORY: incidents-backend-lc
   ECS_CLUSTER: incidents-lc-cluster
   ECS_SERVICE: IncidentsLcEcsStack-IncidentsFargateService1B9BF379-O5ce0fyCSGyh
-  CONTAINER_NAME: incidents-backend
+  TASK_DEFINITION: IncidentsLcEcsStackIncidentsTaskDef4F14A4D9
+  ECS_SUBNET: subnet-0f71fc74020a848f3
+  ECS_SG: sg-0710b39300514a28b
 
 jobs:
   build-and-push:
@@ -41,6 +43,22 @@ jobs:
             ./backend
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Run DB migrations
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --task-definition ${{ env.TASK_DEFINITION }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ env.ECS_SUBNET }}],securityGroups=[${{ env.ECS_SG }}],assignPublicIp=ENABLED}" \
+            --overrides '{"containerOverrides":[{"name":"incidents-backend","command":["npx","prisma","migrate","deploy"]}]}' \
+            --query 'tasks[0].taskArn' --output text)
+          echo "Migration task: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster ${{ env.ECS_CLUSTER }} --tasks $TASK_ARN
+          EXIT_CODE=$(aws ecs describe-tasks --cluster ${{ env.ECS_CLUSTER }} --tasks $TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "Migration exit code: $EXIT_CODE"
+          [ "$EXIT_CODE" = "0" ] || exit 1
 
       - name: Force new ECS deployment
         run: |

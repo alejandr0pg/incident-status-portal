@@ -27,7 +27,7 @@ async function bootstrap(): Promise<void> {
 
   void reflector;
 
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api/v1', { exclude: ['public/status'] });
 
   const port = Number(process.env['PORT'] ?? 3000);
   await app.listen(port);
