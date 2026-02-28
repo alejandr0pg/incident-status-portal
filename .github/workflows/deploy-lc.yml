@@ -84,3 +84,23 @@ jobs:
             --force-new-deployment \
             --query 'service.serviceName' \
             --output text
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm ci
+          NEXT_PUBLIC_API_URL=/api/v1 npm run build
+
+      - name: Deploy frontend
+        run: |
+          BUCKET=$(aws cloudformation describe-stacks \
+            --stack-name IncidentsLcFrontendStack \
+            --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' \
+            --output text)
+          CF_ID=$(aws cloudformation describe-stacks \
+            --stack-name IncidentsLcFrontendStack \
+            --query 'Stacks[0].Outputs[?OutputKey==`DistributionId`].OutputValue' \
+            --output text)
+          aws s3 sync frontend/out/ s3://$BUCKET --delete
+          aws cloudfront create-invalidation \
+            --distribution-id $CF_ID --paths "/*"

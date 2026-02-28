@@ -7,6 +7,7 @@ import { RdsStack } from '../lib/rds-stack';
 import { EcrStack } from '../lib/ecr-stack';
 import { EcsStack } from '../lib/ecs-stack';
 import { MonitoringStack } from '../lib/monitoring-stack';
+import { FrontendStack } from '../lib/frontend-stack';
 
 const app = new cdk.App();
 
@@ -63,5 +64,11 @@ const monitoringStack = new MonitoringStack(app, 'IncidentsLcMonitoringStack', {
   alertEmail: process.env.ALERT_EMAIL,
 });
 monitoringStack.addDependency(ecsStack);
+
+const frontendStack = new FrontendStack(app, 'IncidentsLcFrontendStack', {
+  albDnsName: ecsStack.alb.loadBalancerDnsName,
+  env,
+});
+frontendStack.addDependency(ecsStack);
 
 app.synth();
