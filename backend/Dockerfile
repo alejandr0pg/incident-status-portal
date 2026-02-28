@@ -3,6 +3,8 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+RUN apk add --no-cache openssl
+
 COPY package*.json ./
 COPY prisma ./prisma/
 
@@ -18,7 +20,8 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
-RUN addgroup -g 1001 -S nodejs && \
+RUN apk add --no-cache openssl && \
+    addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
 COPY --from=builder /app/package*.json ./
