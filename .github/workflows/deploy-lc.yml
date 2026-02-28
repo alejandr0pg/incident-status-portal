@@ -60,6 +60,22 @@ jobs:
           echo "Migration exit code: $EXIT_CODE"
           [ "$EXIT_CODE" = "0" ] || exit 1
 
+      - name: Run DB seed
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --task-definition ${{ env.TASK_DEFINITION }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ env.ECS_SUBNET }}],securityGroups=[${{ env.ECS_SG }}],assignPublicIp=ENABLED}" \
+            --overrides '{"containerOverrides":[{"name":"incidents-backend","command":["sh","-c","export DATABASE_URL=\"postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT:-5432}/${DB_NAME}\" && node dist/seed/seed.js"]}]}' \
+            --query 'tasks[0].taskArn' --output text)
+          echo "Seed task: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster ${{ env.ECS_CLUSTER }} --tasks $TASK_ARN
+          EXIT_CODE=$(aws ecs describe-tasks --cluster ${{ env.ECS_CLUSTER }} --tasks $TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "Seed exit code: $EXIT_CODE"
+          [ "$EXIT_CODE" = "0" ] || exit 1
+
       - name: Force new ECS deployment
         run: |
           aws ecs update-service \

@@ -14,6 +14,8 @@ COPY . .
 
 RUN npx prisma generate
 RUN npm run build
+RUN npx tsc --module commonjs --target ES2021 --esModuleInterop --skipLibCheck \
+    --outDir dist/seed --rootDir prisma prisma/seed.ts
 
 # Stage 2: Production
 FROM node:20-alpine AS production
@@ -29,6 +31,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/dist/seed ./dist/seed
 
 RUN npm ci --only=production && \
     npm cache clean --force

@@ -28,38 +28,40 @@ async function main(): Promise<void> {
     },
   });
 
-  await prisma.incident.createMany({
-    data: [
-      {
-        title: 'Database Connection Failure',
-        description:
-          'Primary database cluster is experiencing connection timeouts affecting all services.',
-        severity: Severity.CRITICAL,
-        status: IncidentStatus.INVESTIGATING,
-        impactedServices: ['api', 'auth', 'payments'],
-        createdById: admin.id,
-      },
-      {
-        title: 'Slow API Response Times',
-        description:
-          'API endpoints are responding 3x slower than normal due to increased traffic load.',
-        severity: Severity.HIGH,
-        status: IncidentStatus.OPEN,
-        impactedServices: ['api'],
-        createdById: regularUser.id,
-      },
-      {
-        title: 'Email Notification Delays',
-        description:
-          'Email notifications are being delayed by up to 30 minutes due to queue backlog.',
-        severity: Severity.LOW,
-        status: IncidentStatus.RESOLVED,
-        impactedServices: ['notifications'],
-        createdById: regularUser.id,
-      },
-    ],
-    skipDuplicates: true,
-  });
+  const incidentCount = await prisma.incident.count();
+  if (incidentCount === 0) {
+    await prisma.incident.createMany({
+      data: [
+        {
+          title: 'Database Connection Failure',
+          description:
+            'Primary database cluster is experiencing connection timeouts affecting all services.',
+          severity: Severity.CRITICAL,
+          status: IncidentStatus.INVESTIGATING,
+          impactedServices: ['api', 'auth', 'payments'],
+          createdById: admin.id,
+        },
+        {
+          title: 'Slow API Response Times',
+          description:
+            'API endpoints are responding 3x slower than normal due to increased traffic load.',
+          severity: Severity.HIGH,
+          status: IncidentStatus.OPEN,
+          impactedServices: ['api'],
+          createdById: regularUser.id,
+        },
+        {
+          title: 'Email Notification Delays',
+          description:
+            'Email notifications are being delayed by up to 30 minutes due to queue backlog.',
+          severity: Severity.LOW,
+          status: IncidentStatus.RESOLVED,
+          impactedServices: ['notifications'],
+          createdById: regularUser.id,
+        },
+      ],
+    });
+  }
 
   console.log('Seed completed successfully');
   console.log(`Admin: ${admin.email}`);
