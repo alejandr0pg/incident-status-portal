@@ -31,8 +31,8 @@ export class AuditPrismaRepository implements IAuditRepository {
       action: p.action,
       entityType: p.entityType,
       entityId: p.entityId,
-      beforeSnapshot: p.beforeSnapshot as unknown,
-      afterSnapshot: p.afterSnapshot as unknown,
+      beforeSnapshot: p.beforeSnapshot as Record<string, unknown> | null,
+      afterSnapshot: p.afterSnapshot as Record<string, unknown> | null,
       timestamp: p.timestamp,
     });
   }
