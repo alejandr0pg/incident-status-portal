@@ -14,7 +14,12 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
+    const url =
+      process.env['DATABASE_URL'] ??
+      `postgresql://${process.env['DB_USER']}:${process.env['DB_PASSWORD']}@${process.env['DB_HOST']}:${process.env['DB_PORT'] ?? '5432'}/${process.env['DB_NAME']}`;
+
     super({
+      datasources: { db: { url } },
       log: [
         { emit: 'event', level: 'query' },
         { emit: 'stdout', level: 'error' },
