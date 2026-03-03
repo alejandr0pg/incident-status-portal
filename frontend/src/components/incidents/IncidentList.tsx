@@ -51,11 +51,11 @@ export function IncidentList({
         <div
           key={incident.id}
           className="flex items-start gap-4 p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-          onClick={() => router.push(`/dashboard/incidents/${incident.id}`)}
+          onClick={() => router.push(`/dashboard/incidents?id=${incident.id}`)}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') router.push(`/dashboard/incidents/${incident.id}`)
+            if (e.key === 'Enter') router.push(`/dashboard/incidents?id=${incident.id}`)
           }}
         >
           <div className="flex-1 min-w-0">

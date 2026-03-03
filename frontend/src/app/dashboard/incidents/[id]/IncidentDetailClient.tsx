@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { IncidentForm } from '@/components/incidents/IncidentForm'
 import { SeverityBadge } from '@/components/incidents/SeverityBadge'
 import { Badge } from '@/components/ui/Badge'
@@ -15,8 +15,12 @@ import { formatDate } from '@/application/utils/date'
 import { STATUS_COLOR_MAP } from '@/domain/constants'
 import type { CreateIncidentDto } from '@/domain/types'
 
-export default function IncidentDetailClient() {
-  const { id } = useParams<{ id: string }>()
+interface Props {
+  id: string
+  onBack: () => void
+}
+
+export default function IncidentDetailClient({ id, onBack }: Props) {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -46,7 +50,7 @@ export default function IncidentDetailClient() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <div className="mb-6 flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
+        <Button variant="ghost" size="sm" onClick={onBack}>
           Back
         </Button>
         <div className="flex-1" />
