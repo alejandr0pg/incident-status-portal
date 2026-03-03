@@ -32,8 +32,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_LC }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_LC }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -46,16 +46,66 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./backend
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker build --platform linux/amd64 \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            ./backend
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
+      - name: Get ECS network config
+        id: network
+        run: |
+          SUBNET=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --query 'services[0].networkConfiguration.awsvpcConfiguration.subnets[0]' \
+            --output text)
+          SG=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --query 'services[0].networkConfiguration.awsvpcConfiguration.securityGroups[0]' \
+            --output text)
+          echo "subnet=$SUBNET" >> $GITHUB_OUTPUT
+          echo "sg=$SG" >> $GITHUB_OUTPUT
+
+      - name: Run DB migrations
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --task-definition ${{ env.CONTAINER_NAME }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ steps.network.outputs.subnet }}],securityGroups=[${{ steps.network.outputs.sg }}]}" \
+            --overrides '{"containerOverrides":[{"name":"${{ env.CONTAINER_NAME }}","command":["sh","-c","export DATABASE_URL=\"postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT:-5432}/${DB_NAME}\" && npx prisma migrate deploy"]}]}' \
+            --query 'tasks[0].taskArn' --output text)
+          echo "Migration task: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster ${{ env.ECS_CLUSTER }} --tasks $TASK_ARN
+          EXIT_CODE=$(aws ecs describe-tasks --cluster ${{ env.ECS_CLUSTER }} --tasks $TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "Migration exit code: $EXIT_CODE"
+          [ "$EXIT_CODE" = "0" ] || exit 1
+
+      - name: Run DB seed
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --task-definition ${{ env.CONTAINER_NAME }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ steps.network.outputs.subnet }}],securityGroups=[${{ steps.network.outputs.sg }}]}" \
+            --overrides '{"containerOverrides":[{"name":"${{ env.CONTAINER_NAME }}","command":["sh","-c","export DATABASE_URL=\"postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT:-5432}/${DB_NAME}\" && node dist/seed/seed.js"]}]}' \
+            --query 'tasks[0].taskArn' --output text)
+          echo "Seed task: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster ${{ env.ECS_CLUSTER }} --tasks $TASK_ARN
+          EXIT_CODE=$(aws ecs describe-tasks --cluster ${{ env.ECS_CLUSTER }} --tasks $TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "Seed exit code: $EXIT_CODE"
+          [ "$EXIT_CODE" = "0" ] || exit 1
+
       - name: Download current ECS task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition incidents-backend \
+            --task-definition ${{ env.CONTAINER_NAME }} \
             --query taskDefinition \
             > task-definition.json
 
@@ -74,16 +124,3 @@ jobs:
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
-
-      - name: Run DB migrations
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          aws ecs run-task \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --task-definition incidents-backend \
-            --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.ECS_SUBNET_ID }}],securityGroups=[${{ secrets.ECS_SECURITY_GROUP_ID }}]}" \
-            --overrides '{"containerOverrides":[{"name":"${{ env.CONTAINER_NAME }}","command":["npx","prisma","migrate","deploy"]}]}' \
-            --count 1

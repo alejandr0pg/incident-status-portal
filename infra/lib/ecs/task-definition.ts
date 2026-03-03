@@ -41,6 +41,7 @@ export function buildTaskDefinition(
   );
 
   const taskDefinition = new ecs.FargateTaskDefinition(scope, 'IncidentsTaskDef', {
+    family: 'incidents-backend',
     cpu: 512,
     memoryLimitMiB: 1024,
     executionRole,
