@@ -14,8 +14,8 @@ export interface EcsStackProps extends cdk.StackProps {
   readonly albSg: ec2.SecurityGroup;
   readonly ecsSg: ec2.SecurityGroup;
   readonly repository: ecr.Repository;
-  readonly dbSecret: secretsmanager.Secret;
-  readonly jwtSecret: secretsmanager.Secret;
+  readonly dbSecret: secretsmanager.ISecret;
+  readonly jwtSecret: secretsmanager.ISecret;
   readonly dbClusterEndpoint: string;
   readonly isProd: boolean;
 }

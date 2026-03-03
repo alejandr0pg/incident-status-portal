@@ -8,8 +8,8 @@ import { Construct } from 'constructs';
 
 export interface TaskDefinitionProps {
   readonly repository: ecr.Repository;
-  readonly dbSecret: secretsmanager.Secret;
-  readonly jwtSecret: secretsmanager.Secret;
+  readonly dbSecret: secretsmanager.ISecret;
+  readonly jwtSecret: secretsmanager.ISecret;
   readonly dbClusterEndpoint: string;
   readonly logGroup: logs.LogGroup;
 }

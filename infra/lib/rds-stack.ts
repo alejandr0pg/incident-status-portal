@@ -7,18 +7,17 @@ import { Construct } from 'constructs';
 export interface RdsStackProps extends cdk.StackProps {
   readonly vpc: ec2.Vpc;
   readonly rdsSg: ec2.SecurityGroup;
-  readonly dbSecret: secretsmanager.Secret;
   readonly isProd: boolean;
 }
 
 export class RdsStack extends cdk.Stack {
   public readonly clusterEndpoint: string;
-  public readonly secretArn: string;
+  public readonly dbSecret: secretsmanager.ISecret;
 
   constructor(scope: Construct, id: string, props: RdsStackProps) {
     super(scope, id, props);
 
-    const { vpc, rdsSg, dbSecret, isProd } = props;
+    const { vpc, rdsSg, isProd } = props;
 
     const removalPolicy = isProd
       ? cdk.RemovalPolicy.RETAIN
@@ -29,7 +28,9 @@ export class RdsStack extends cdk.Stack {
         version: rds.AuroraPostgresEngineVersion.VER_15_4,
       }),
       defaultDatabaseName: 'incidents',
-      credentials: rds.Credentials.fromSecret(dbSecret),
+      credentials: rds.Credentials.fromGeneratedSecret('incidents_admin', {
+        secretName: 'incidents/db-credentials',
+      }),
       serverlessV2MinCapacity: 0.5,
       serverlessV2MaxCapacity: 4,
       writer: rds.ClusterInstance.serverlessV2('writer', {
@@ -57,7 +58,7 @@ export class RdsStack extends cdk.Stack {
     });
 
     this.clusterEndpoint = cluster.clusterEndpoint.hostname;
-    this.secretArn = dbSecret.secretArn;
+    this.dbSecret = cluster.secret!;
 
     new cdk.CfnOutput(this, 'ClusterEndpoint', {
       value: this.clusterEndpoint,
@@ -70,7 +71,7 @@ export class RdsStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'DbSecretArnOutput', {
-      value: this.secretArn,
+      value: this.dbSecret.secretArn,
       exportName: 'IncidentsRdsSecretArn',
     });
   }

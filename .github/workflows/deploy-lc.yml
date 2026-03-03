@@ -7,7 +7,6 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: incidents-backend-lc
   ECS_CLUSTER: incidents-lc-cluster
-  ECS_SERVICE: IncidentsLcEcsStack-IncidentsFargateService1B9BF379-O5ce0fyCSGyh
   TASK_DEFINITION: IncidentsLcEcsStackIncidentsTaskDef4F14A4D9
   ECS_SUBNET: subnet-0f71fc74020a848f3
   ECS_SG: sg-0710b39300514a28b
@@ -80,7 +79,7 @@ jobs:
         run: |
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
-            --service ${{ env.ECS_SERVICE }} \
+            --service incidents-lc-service \
             --force-new-deployment \
             --query 'service.serviceName' \
             --output text

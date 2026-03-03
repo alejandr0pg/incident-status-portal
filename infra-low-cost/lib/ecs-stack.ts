@@ -54,6 +54,7 @@ export class EcsStack extends cdk.Stack {
     this.fargateService = new ecs.FargateService(this, 'IncidentsFargateService', {
       cluster,
       taskDefinition,
+      serviceName: 'incidents-lc-service',
       desiredCount: 1,
       securityGroups: [ecsSg],
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },

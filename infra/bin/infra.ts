@@ -33,7 +33,6 @@ const rdsStack = new RdsStack(app, 'IncidentsRdsStack', {
   description: 'RDS Aurora Serverless v2 for Incident & Status Portal',
   vpc: vpcStack.vpc,
   rdsSg: vpcStack.rdsSg,
-  dbSecret: secretsStack.dbSecret,
   isProd,
 });
 rdsStack.addDependency(vpcStack);
@@ -52,7 +51,7 @@ const ecsStack = new EcsStack(app, 'IncidentsEcsStack', {
   albSg: vpcStack.albSg,
   ecsSg: vpcStack.ecsSg,
   repository: ecrStack.repository,
-  dbSecret: secretsStack.dbSecret,
+  dbSecret: rdsStack.dbSecret,
   jwtSecret: secretsStack.jwtSecret,
   dbClusterEndpoint: rdsStack.clusterEndpoint,
   isProd,
