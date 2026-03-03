@@ -58,7 +58,7 @@ export default function IncidentsPage() {
       </div>
 
       <IncidentList
-        incidents={data?.data.data}
+        incidents={data?.data}
         isLoading={isLoading}
         isError={isError}
         onRetry={() => refetch()}

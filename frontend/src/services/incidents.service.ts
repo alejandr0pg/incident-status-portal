@@ -10,7 +10,7 @@ import type {
 
 export async function listIncidents(
   filters?: IncidentFilters
-): Promise<ApiResponse<PaginatedResponse<Incident>>> {
+): Promise<PaginatedResponse<Incident>> {
   const params = new URLSearchParams()
   if (filters?.status) params.set('status', filters.status)
   if (filters?.severity) params.set('severity', filters.severity)
@@ -18,7 +18,7 @@ export async function listIncidents(
   const response = await apiClient.get<ApiResponse<PaginatedResponse<Incident>>>(
     `/incidents?${params.toString()}`
   )
-  return response.data
+  return response.data.data
 }
 
 export async function getIncident(id: string): Promise<ApiResponse<Incident>> {
