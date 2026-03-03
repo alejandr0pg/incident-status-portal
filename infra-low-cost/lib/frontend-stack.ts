@@ -30,12 +30,32 @@ export class FrontendStack extends cdk.Stack {
       viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
     };
 
+    // Rewrite /path/ → /path/index.html so S3 serves the correct pre-rendered page
+    const rewriteFunction = new cloudfront.Function(this, 'RewriteFunction', {
+      code: cloudfront.FunctionCode.fromInline(`
+function handler(event) {
+  var uri = event.request.uri;
+  if (uri.endsWith('/')) {
+    event.request.uri = uri + 'index.html';
+  } else if (!uri.includes('.')) {
+    event.request.uri = uri + '/index.html';
+  }
+  return event.request;
+}
+`),
+      runtime: cloudfront.FunctionRuntime.JS_2_0,
+    });
+
     const distribution = new cloudfront.Distribution(this, 'FrontendDistribution', {
       defaultRootObject: 'index.html',
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(bucket),
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        functionAssociations: [{
+          function: rewriteFunction,
+          eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+        }],
       },
       additionalBehaviors: {
         '/api/v1/*': albBehavior,
