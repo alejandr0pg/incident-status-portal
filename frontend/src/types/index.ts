@@ -7,6 +7,7 @@ export type {
   Incident,
   AuditLog,
   ApiResponse,
+  PaginatedResponse,
   IncidentFilters,
   AuditFilters,
   CreateIncidentDto,

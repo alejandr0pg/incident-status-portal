@@ -54,7 +54,7 @@ export default function AuditPage() {
       </div>
 
       <AuditTable
-        logs={data?.data}
+        logs={data?.data.data}
         isLoading={isLoading}
         isError={isError}
         onRetry={() => refetch()}

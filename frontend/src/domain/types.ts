@@ -38,6 +38,13 @@ export interface ApiResponse<T> {
   timestamp: string
 }
 
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  limit: number
+}
+
 export interface IncidentFilters {
   status?: IncidentStatus
   severity?: Severity

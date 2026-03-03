@@ -1,6 +1,7 @@
 import apiClient from '@/lib/axios'
 import type {
   ApiResponse,
+  PaginatedResponse,
   Incident,
   IncidentFilters,
   CreateIncidentDto,
@@ -9,12 +10,12 @@ import type {
 
 export async function listIncidents(
   filters?: IncidentFilters
-): Promise<ApiResponse<Incident[]>> {
+): Promise<ApiResponse<PaginatedResponse<Incident>>> {
   const params = new URLSearchParams()
   if (filters?.status) params.set('status', filters.status)
   if (filters?.severity) params.set('severity', filters.severity)
 
-  const response = await apiClient.get<ApiResponse<Incident[]>>(
+  const response = await apiClient.get<ApiResponse<PaginatedResponse<Incident>>>(
     `/incidents?${params.toString()}`
   )
   return response.data
