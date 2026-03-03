@@ -11,7 +11,7 @@ export interface RdsStackProps extends cdk.StackProps {
 }
 
 export class RdsStack extends cdk.Stack {
-  public readonly clusterEndpoint: string;
+  public readonly instanceEndpoint: string;
   public readonly dbSecret: secretsmanager.ISecret;
 
   constructor(scope: Construct, id: string, props: RdsStackProps) {
@@ -23,51 +23,36 @@ export class RdsStack extends cdk.Stack {
       ? cdk.RemovalPolicy.RETAIN
       : cdk.RemovalPolicy.DESTROY;
 
-    const cluster = new rds.DatabaseCluster(this, 'IncidentsAuroraCluster', {
-      engine: rds.DatabaseClusterEngine.auroraPostgres({
-        version: rds.AuroraPostgresEngineVersion.VER_15_4,
+    const instance = new rds.DatabaseInstance(this, 'IncidentsRdsInstance', {
+      engine: rds.DatabaseInstanceEngine.postgres({
+        version: rds.PostgresEngineVersion.VER_15,
       }),
-      defaultDatabaseName: 'incidents',
+      instanceType: ec2.InstanceType.of(
+        ec2.InstanceClass.T3,
+        ec2.InstanceSize.MICRO,
+      ),
       credentials: rds.Credentials.fromGeneratedSecret('incidents_admin', {
         secretName: 'incidents/db-credentials',
       }),
-      serverlessV2MinCapacity: 0.5,
-      serverlessV2MaxCapacity: 4,
-      writer: rds.ClusterInstance.serverlessV2('writer', {
-        publiclyAccessible: false,
-      }),
-      readers: isProd
-        ? [
-            rds.ClusterInstance.serverlessV2('reader', {
-              scaleWithWriter: true,
-            }),
-          ]
-        : [],
+      databaseName: 'incidents',
       vpc,
-      vpcSubnets: {
-        subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
-      },
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
       securityGroups: [rdsSg],
+      multiAz: isProd,
+      allocatedStorage: 20,
+      storageType: rds.StorageType.GP2,
       deletionProtection: isProd,
       removalPolicy,
-      backup: {
-        retention: isProd ? cdk.Duration.days(7) : cdk.Duration.days(1),
-        preferredWindow: '03:00-04:00',
-      },
-      preferredMaintenanceWindow: 'sun:05:00-sun:06:00',
+      backupRetention: isProd ? cdk.Duration.days(7) : cdk.Duration.days(1),
+      deleteAutomatedBackups: !isProd,
     });
 
-    this.clusterEndpoint = cluster.clusterEndpoint.hostname;
-    this.dbSecret = cluster.secret!;
+    this.instanceEndpoint = instance.dbInstanceEndpointAddress;
+    this.dbSecret = instance.secret!;
 
-    new cdk.CfnOutput(this, 'ClusterEndpoint', {
-      value: this.clusterEndpoint,
-      exportName: 'IncidentsDbClusterEndpoint',
-    });
-
-    new cdk.CfnOutput(this, 'ClusterPort', {
-      value: cluster.clusterEndpoint.port.toString(),
-      exportName: 'IncidentsDbClusterPort',
+    new cdk.CfnOutput(this, 'InstanceEndpoint', {
+      value: this.instanceEndpoint,
+      exportName: 'IncidentsDbInstanceEndpoint',
     });
 
     new cdk.CfnOutput(this, 'DbSecretArnOutput', {

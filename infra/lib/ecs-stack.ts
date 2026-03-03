@@ -16,7 +16,7 @@ export interface EcsStackProps extends cdk.StackProps {
   readonly repository: ecr.Repository;
   readonly dbSecret: secretsmanager.ISecret;
   readonly jwtSecret: secretsmanager.ISecret;
-  readonly dbClusterEndpoint: string;
+  readonly dbEndpoint: string;
   readonly isProd: boolean;
 }
 
@@ -27,7 +27,7 @@ export class EcsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: EcsStackProps) {
     super(scope, id, props);
 
-    const { vpc, albSg, ecsSg, repository, dbSecret, jwtSecret, dbClusterEndpoint, isProd } = props;
+    const { vpc, albSg, ecsSg, repository, dbSecret, jwtSecret, dbEndpoint, isProd } = props;
 
     const logGroup = new logs.LogGroup(this, 'EcsLogGroup', {
       logGroupName: '/ecs/incidents-backend',
@@ -45,7 +45,7 @@ export class EcsStack extends cdk.Stack {
       repository,
       dbSecret,
       jwtSecret,
-      dbClusterEndpoint,
+      dbEndpoint,
       logGroup,
     });
 

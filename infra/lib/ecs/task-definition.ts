@@ -10,7 +10,7 @@ export interface TaskDefinitionProps {
   readonly repository: ecr.Repository;
   readonly dbSecret: secretsmanager.ISecret;
   readonly jwtSecret: secretsmanager.ISecret;
-  readonly dbClusterEndpoint: string;
+  readonly dbEndpoint: string;
   readonly logGroup: logs.LogGroup;
 }
 
@@ -18,7 +18,7 @@ export function buildTaskDefinition(
   scope: Construct,
   props: TaskDefinitionProps,
 ): ecs.FargateTaskDefinition {
-  const { repository, dbSecret, jwtSecret, dbClusterEndpoint, logGroup } = props;
+  const { repository, dbSecret, jwtSecret, dbEndpoint, logGroup } = props;
 
   const executionRole = new iam.Role(scope, 'EcsExecutionRole', {
     assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
@@ -58,7 +58,7 @@ export function buildTaskDefinition(
     environment: {
       PORT: '3000',
       NODE_ENV: 'production',
-      DB_HOST: dbClusterEndpoint,
+      DB_HOST: dbEndpoint,
       DB_PORT: '5432',
       DB_NAME: 'incidents',
     },

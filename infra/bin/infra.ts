@@ -53,7 +53,7 @@ const ecsStack = new EcsStack(app, 'IncidentsEcsStack', {
   repository: ecrStack.repository,
   dbSecret: rdsStack.dbSecret,
   jwtSecret: secretsStack.jwtSecret,
-  dbClusterEndpoint: rdsStack.clusterEndpoint,
+  dbEndpoint: rdsStack.instanceEndpoint,
   isProd,
 });
 ecsStack.addDependency(vpcStack);

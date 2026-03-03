@@ -77,9 +77,13 @@ jobs:
 
       - name: Force new ECS deployment
         run: |
+          ECS_SERVICE=$(aws cloudformation describe-stacks \
+            --stack-name IncidentsLcEcsStack \
+            --query 'Stacks[0].Outputs[?OutputKey==`ServiceName`].OutputValue' \
+            --output text)
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
-            --service incidents-lc-service \
+            --service "$ECS_SERVICE" \
             --force-new-deployment \
             --query 'service.serviceName' \
             --output text
