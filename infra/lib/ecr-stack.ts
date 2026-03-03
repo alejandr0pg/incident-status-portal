@@ -27,17 +27,17 @@ export class EcrStack extends cdk.Stack {
     });
 
     this.repository.addLifecycleRule({
-      description: 'Keep only the last 10 images',
-      maxImageCount: 10,
+      description: 'Remove untagged images after 1 day',
+      maxImageAge: cdk.Duration.days(1),
       rulePriority: 1,
-      tagStatus: ecr.TagStatus.ANY,
+      tagStatus: ecr.TagStatus.UNTAGGED,
     });
 
     this.repository.addLifecycleRule({
-      description: 'Remove untagged images after 1 day',
-      maxImageAge: cdk.Duration.days(1),
+      description: 'Keep only the last 10 images',
+      maxImageCount: 10,
       rulePriority: 2,
-      tagStatus: ecr.TagStatus.UNTAGGED,
+      tagStatus: ecr.TagStatus.ANY,
     });
 
     new cdk.CfnOutput(this, 'RepositoryUri', {

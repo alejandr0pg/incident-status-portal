@@ -72,11 +72,11 @@ export function buildTaskDefinition(
       logGroup,
     }),
     healthCheck: {
-      command: ['CMD-SHELL', 'curl -f http://localhost:3000/public/status || exit 1'],
+      command: ['CMD-SHELL', 'wget -qO- http://localhost:3000/public/status > /dev/null || exit 1'],
       interval: cdk.Duration.seconds(30),
-      timeout: cdk.Duration.seconds(5),
-      retries: 2,
-      startPeriod: cdk.Duration.seconds(60),
+      timeout: cdk.Duration.seconds(10),
+      retries: 3,
+      startPeriod: cdk.Duration.seconds(120),
     },
   });
 
