@@ -1,4 +1,4 @@
-import apiClient from '@/lib/axios'
+import apiClient from "@/lib/axios";
 import type {
   ApiResponse,
   PaginatedResponse,
@@ -6,49 +6,49 @@ import type {
   IncidentFilters,
   CreateIncidentDto,
   UpdateIncidentDto,
-} from '@/types'
+} from "@/types";
 
 export async function listIncidents(
-  filters?: IncidentFilters
+  filters?: IncidentFilters,
 ): Promise<PaginatedResponse<Incident>> {
-  const params = new URLSearchParams()
-  if (filters?.status) params.set('status', filters.status)
-  if (filters?.severity) params.set('severity', filters.severity)
+  const params = new URLSearchParams();
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.severity) params.set("severity", filters.severity);
 
-  const response = await apiClient.get<ApiResponse<PaginatedResponse<Incident>>>(
-    `/incidents?${params.toString()}`
-  )
-  return response.data.data
+  const response = await apiClient.get<
+    ApiResponse<PaginatedResponse<Incident>>
+  >(`/incidents?${params.toString()}`);
+  return response.data.data;
 }
 
 export async function getIncident(id: string): Promise<ApiResponse<Incident>> {
   const response = await apiClient.get<ApiResponse<Incident>>(
-    `/incidents/${id}`
-  )
-  return response.data
+    `/incidents/${id}`,
+  );
+  return response.data;
 }
 
 export async function createIncident(
-  data: CreateIncidentDto
+  data: CreateIncidentDto,
 ): Promise<ApiResponse<Incident>> {
   const response = await apiClient.post<ApiResponse<Incident>>(
-    '/incidents',
-    data
-  )
-  return response.data
+    "/incidents",
+    data,
+  );
+  return response.data;
 }
 
 export async function updateIncident(
   id: string,
-  data: UpdateIncidentDto
+  data: UpdateIncidentDto,
 ): Promise<ApiResponse<Incident>> {
-  const response = await apiClient.put<ApiResponse<Incident>>(
+  const response = await apiClient.patch<ApiResponse<Incident>>(
     `/incidents/${id}`,
-    data
-  )
-  return response.data
+    data,
+  );
+  return response.data;
 }
 
 export async function deleteIncident(id: string): Promise<void> {
-  await apiClient.delete(`/incidents/${id}`)
+  await apiClient.delete(`/incidents/${id}`);
 }
