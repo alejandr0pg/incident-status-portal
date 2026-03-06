@@ -4,12 +4,14 @@ import { ListIncidentsUseCase } from '../application/use-cases/list-incidents.us
 import { CreateIncidentUseCase } from '../application/use-cases/create-incident.use-case';
 import { UpdateIncidentUseCase } from '../application/use-cases/update-incident.use-case';
 import { DeleteIncidentUseCase } from '../application/use-cases/delete-incident.use-case';
+import { GetIncidentUseCase } from '../application/use-cases/get-incident.use-case';
 import { JwtAuthGuard } from '../../../shared/infrastructure/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../shared/infrastructure/guards/roles.guard';
 import { UserRole } from '../../auth/domain/entities/user.entity';
 import { Request } from 'express';
 
 const mockListUseCase = { execute: jest.fn() };
+const mockGetUseCase = { execute: jest.fn() };
 const mockCreateUseCase = { execute: jest.fn() };
 const mockUpdateUseCase = { execute: jest.fn() };
 const mockDeleteUseCase = { execute: jest.fn() };
@@ -25,6 +27,7 @@ async function buildController(): Promise<IncidentsController> {
     controllers: [IncidentsController],
     providers: [
       { provide: ListIncidentsUseCase, useValue: mockListUseCase },
+      { provide: GetIncidentUseCase, useValue: mockGetUseCase },
       { provide: CreateIncidentUseCase, useValue: mockCreateUseCase },
       { provide: UpdateIncidentUseCase, useValue: mockUpdateUseCase },
       { provide: DeleteIncidentUseCase, useValue: mockDeleteUseCase },

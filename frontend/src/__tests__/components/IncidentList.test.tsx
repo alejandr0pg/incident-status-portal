@@ -110,7 +110,7 @@ describe('IncidentList', () => {
     render(<IncidentList incidents={sampleIncidents} />)
 
     await user.click(screen.getByText('Database connection failure'))
-    expect(mockRouter.push).toHaveBeenCalledWith('/dashboard/incidents/inc-001')
+    expect(mockRouter.push).toHaveBeenCalledWith('/dashboard/incidents?id=inc-001')
   })
 
   it('shows impacted services when present', () => {
